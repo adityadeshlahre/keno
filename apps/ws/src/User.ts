@@ -7,7 +7,7 @@ export class User {
   public id: number;
   public balance: number;
   public ws: WebSocket;
-  public amount: number;
+  public wonAmount: number;
   public isAdmin: boolean;
   public betNumbers: number[];
 
@@ -15,7 +15,7 @@ export class User {
     this.id = id;
     this.balance = 1000;
     this.ws = ws;
-    this.amount = 0;
+    this.wonAmount = 0;
     this.isAdmin = isAdmin;
     this.betNumbers = [];
     this.inithandler();
@@ -31,7 +31,6 @@ export class User {
         console.log(message);
         // if (message.type === "USER_CONNECT") {
         //   userManager.connectUser(this.ws);
-        //   console.log("User connected");
         // } else {
         //   this.ws.send(
         //     JSON.stringify({
@@ -43,7 +42,6 @@ export class User {
 
         if (message.type === "ADMIN_CONNECT" && message.password === "admin") {
           userManager.connectUser(this.ws, true);
-          console.log("Admin connected");
           this.ws.send(
             JSON.stringify({ type: "ADMIN_CONNECTED", userId: this.id })
           );
@@ -70,14 +68,15 @@ export class User {
             adminManager.ChangeState(GameStatus.GameOver);
             if (this.betNumbers !== message.winnigNumbers) {
               adminManager.selectWinningNumbers(message.winnigNumbers);
+              this.ws.send(JSON.stringify({ type: "GAME_ENDED" }));
+              adminManager.announceResults();
             }
-            this.ws.send(JSON.stringify({ type: "GAME_ENDED" }));
-            userManager.announceResults();
           }
         }
 
         if (this.isAdmin && message.type === "RESET_GAME") {
           if (adminManager.GameState() === GameStatus.GameOver) {
+            adminManager.resetGame();
             adminManager.ChangeState(GameStatus.Inactive);
             this.ws.send(JSON.stringify({ type: "GAME_RESET" }));
           }
@@ -89,9 +88,9 @@ export class User {
             userManager.placeBet(
               this.id,
               this.ws,
-              this.betNumbers,
-              this.balance,
-              this.amount
+              this.betNumbers
+              // this.balance,
+              // this.amount
             );
           } else if (adminManager.GameState() === GameStatus.Inactive) {
             this.ws.send(JSON.stringify({ type: "GAME_NOT_ACTIVE" }));
@@ -111,26 +110,17 @@ export class User {
     });
   }
 
-  // bet(ID: string, betNumbers: number[], amount: number) {
-  //   if (this.balance < amount) {
-  //     this.ws.send(JSON.stringify({ type: "INSUFFICIENT_FUNDS" }));
-  //     return;
-  //   }
-  //   console.log("User placed a bet");
-  //   this.ws.send(JSON.stringify({ type: "BET_PLACED", betNumbers }));
-  // }
-
   send(payload: OutgoingMessages) {
     this.ws.send(JSON.stringify(payload));
   }
 
-  won(amount: number, winningNumbers: number[]) {
-    this.balance += amount;
-    this.amount = amount;
+  won(wonAmount: number, winningNumbers: number[]) {
+    this.balance += wonAmount;
+    this.wonAmount = wonAmount;
     this.ws.send(
       JSON.stringify({
         type: "WIN",
-        amount: this.amount,
+        wonAmount: this.wonAmount,
         balance: this.balance,
         winningNumbers,
       })
@@ -141,7 +131,7 @@ export class User {
     this.ws.send(
       JSON.stringify({
         type: "LOSS",
-        amount: this.amount,
+        wonAmount: this.wonAmount,
         balance: this.balance,
         winningNumbers,
       })

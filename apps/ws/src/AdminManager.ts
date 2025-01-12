@@ -30,11 +30,10 @@ export class AdminManager {
 
   public startGame() {
     this.state = GameStatus.Active;
-    // Game.bets = []; // Clear any previous bets
-    // Game.winningNumbers = []; // Clear previous winning numbers
+    Game.bets = [];
+    Game.winningNumbers = [];
 
     UserManager.getInstance().brodcast({ type: "GAME_STARTED" });
-    console.log("Game started");
   }
 
   public stopGame() {
@@ -42,12 +41,20 @@ export class AdminManager {
     UserManager.getInstance().brodcast({ type: "GAME_STOPPED" });
   }
 
+  public resetGame() {
+    this.state = GameStatus.Inactive;
+    Game.winningNumbers = [];
+    Object.values(UserManager.getInstance()._user).forEach((user) => {
+      user.wonAmount = 0;
+      user.betNumbers = [];
+    });
+    UserManager.getInstance().brodcast({ type: "RESET_GAME" });
+  }
+
   public selectWinningNumbers(numbers?: number[]) {
     if (numbers && numbers.length === 20) {
-      // Use admin-provided numbers
-      Game.winningNumbers = numbers;
+      Game.winningNumbers = numbers.map(Number);
     } else {
-      // Generate 20 unique random numbers between 1 and 80
       const generatedNumbers = new Set<number>();
       while (generatedNumbers.size < 20) {
         generatedNumbers.add(Math.floor(Math.random() * 80) + 1);
@@ -59,6 +66,39 @@ export class AdminManager {
     UserManager.getInstance().brodcast({
       type: "WINNING_NUMBERS",
       numbers: Game.winningNumbers,
+    });
+  }
+
+  public announceResults() {
+    const winningSet = new Set(Game.winningNumbers.map(Number));
+    const userManager = UserManager.getInstance();
+
+    Object.values(UserManager.getInstance()._user).forEach((user) => {
+      if (!user.betNumbers || user.betNumbers.length === 0) {
+        console.log(`User ${user.id} has no bets`);
+        return;
+      }
+
+      const matches: number = user.betNumbers
+        .map(Number)
+        .filter((num) => winningSet.has(num)).length;
+
+      if (matches > 0) {
+        const payout = 50 * matches;
+        user.balance += payout;
+
+        user.send({
+          type: "RESULT",
+          matches: matches,
+          wonAmount: payout,
+          balance: user.balance,
+        });
+      }
+    });
+
+    Object.values(UserManager.getInstance()._user).forEach((user) => {
+      user.betNumbers = [];
+      user.wonAmount = 0;
     });
   }
 }

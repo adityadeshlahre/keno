@@ -48,6 +48,9 @@ export type OutgoingMessages =
       type: "GAME_STOPPED";
     }
   | {
+      type: "RESET_GAME";
+    }
+  | {
       type: "WINNING_NUMBERS";
       numbers: number[];
     }
@@ -63,7 +66,7 @@ export type OutgoingMessages =
   | {
       type: "RESULT";
       matches: number;
-      amountWon: number;
+      wonAmount: number;
       balance: number;
     }
   | {

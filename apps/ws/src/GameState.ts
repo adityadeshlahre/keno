@@ -3,7 +3,7 @@ import { WebSocket } from "ws";
 
 export interface User {
   socket: WebSocket;
-  numbers: number[];
+  betNumbers: number[];
   balance: number;
 }
 

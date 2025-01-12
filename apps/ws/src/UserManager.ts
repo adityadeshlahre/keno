@@ -34,33 +34,6 @@ export class UserManager {
     ws.on("close", () => this.removeUser(id));
   }
 
-  public announceResults() {
-    const winningSet = new Set(Game.winningNumbers);
-
-    Object.values(this._user).forEach((user) => {
-      const uniqueBets = new Set(user.betNumbers);
-      console.log("Unique Bets:", uniqueBets);
-      const matches = [...uniqueBets].filter((num) =>
-        winningSet.has(num)
-      ).length;
-
-      console.log("Matches:", matches);
-
-      if (matches > 0) {
-        const payout = 50 * matches;
-        user.balance += payout;
-
-        // Send result to the individual user
-        user.send({
-          type: "RESULT",
-          matches: matches,
-          amountWon: payout,
-          balance: user.balance,
-        });
-      }
-    });
-  }
-
   public brodcast(message: OutgoingMessages, id?: number) {
     Object.keys(this._user).forEach((userId) => {
       const user = this._user[userId] as User;
@@ -77,13 +50,31 @@ export class UserManager {
   public placeBet(
     id: number,
     ws: WebSocket,
-    betNumbers: number[],
-    balance?: number,
-    amount?: number
+    betNumbers: number[]
+    // balance?: number,
+    // amount?: number
   ) {
-    const user = this._user[id];
+    if (!betNumbers || betNumbers.length === 0) {
+      console.log(`Invalid bet numbers provided by user ${id}`);
+      ws.send(
+        JSON.stringify({ type: "error", message: "No bet numbers provided" })
+      );
+      return;
+    }
+
+    const user =
+      this._user[id] || Object.values(this._user).find((u) => u.ws === ws);
+
     if (!user) {
       ws.send(JSON.stringify({ type: "error", message: "User not found" }));
+      return;
+    }
+
+    if (user.betNumbers.length === 20) {
+      user.send({
+        type: "error",
+        message: "You have already placed MAX number of bet",
+      });
       return;
     }
 
@@ -99,14 +90,13 @@ export class UserManager {
     }
 
     user.balance -= betAmount;
-    user.betNumbers = betNumbers;
+    user.betNumbers = [...betNumbers];
 
     user.send({
       type: "BET_PLACED",
-      betNumbers: betNumbers,
+      betNumbers: user.betNumbers,
       remainingBalance: user.balance,
     });
-    console.log("Bet placed by user");
   }
 
   public getUserBalance(ws: WebSocket) {
