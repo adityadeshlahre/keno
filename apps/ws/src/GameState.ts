@@ -3,20 +3,20 @@ import { WebSocket } from "ws";
 
 export interface User {
   socket: WebSocket;
-  numbers: Number[];
+  numbers: number[];
   balance: number;
 }
 
 export interface GameState {
   status: GameStatus;
   bets: { socket: WebSocket; numbers: number[]; balance: number }[];
-  winningNumbers: Number[];
+  winningNumbers: number[];
 }
 
-const gameState: GameState = {
+const Game: GameState = {
   status: GameStatus.Inactive,
   bets: [],
   winningNumbers: [],
 };
 
-export default gameState;
+export default Game;

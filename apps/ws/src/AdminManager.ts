@@ -1,53 +1,37 @@
-import { GameStatus, OutgoingMessages } from "@repo/types";
-import gameState from "src/GameState";
-import WebSocket from "ws";
-import { User } from "./User";
+import { GameStatus } from "@repo/types";
+import Game from "./GameState";
 import UserManager from "./UserManager";
-import { Admin } from "./Admin";
 
-let ID: number = 0;
 export class AdminManager {
-  state: GameStatus = GameStatus.Inactive;
-  winninNumbers: Number[] = gameState.winningNumbers;
-  private _admin: { [key: string]: Admin } = {};
+  private state: GameStatus = GameStatus.Inactive;
+  private winninNumbers: number[] = Game.winningNumbers;
   private static _instance: AdminManager;
 
   private constructor() {}
 
-  public static getInstance() {
+  public static getInstance(): AdminManager {
     if (!this._instance) {
       this._instance = new AdminManager();
     }
     return this._instance;
   }
 
-  public connectAdmin(ws: WebSocket) {
-    const id = ID++;
-    const user = new Admin(id, ws);
-    this._admin[id] = user;
-
-    // gameState.bets.push({
-    //   socket: ws,
-    //   numbers: [],
-    //   balance: initialBalance,
-    // });
-
-    // Inform the user about their initial balance
-    user.send({
-      type: "CONNECTED",
-      state: this.state,
-    });
-    ws.on("close", () => this.removeUser(id));
+  public GameState(): GameStatus {
+    return this.state;
   }
 
-  public removeUser(id: number) {
-    delete this._admin[id];
+  public ChangeState(state: GameStatus) {
+    this.state = state;
+  }
+
+  public GameWinningNumbers(): number[] {
+    return this.winninNumbers;
   }
 
   public startGame() {
     this.state = GameStatus.Active;
-    // gameState.bets = []; // Clear any previous bets
-    // gameState.winningNumbers = []; // Clear previous winning numbers
+    // Game.bets = []; // Clear any previous bets
+    // Game.winningNumbers = []; // Clear previous winning numbers
 
     UserManager.getInstance().brodcast({ type: "GAME_STARTED" });
     console.log("Game started");
@@ -58,47 +42,24 @@ export class AdminManager {
     UserManager.getInstance().brodcast({ type: "GAME_STOPPED" });
   }
 
-  public selectWinningNumbers(numbers?: Number[]) {
+  public selectWinningNumbers(numbers?: number[]) {
     if (numbers && numbers.length === 20) {
       // Use admin-provided numbers
-      gameState.winningNumbers = numbers;
+      Game.winningNumbers = numbers;
     } else {
       // Generate 20 unique random numbers between 1 and 80
-      const generatedNumbers = new Set<Number>();
+      const generatedNumbers = new Set<number>();
       while (generatedNumbers.size < 20) {
         generatedNumbers.add(Math.floor(Math.random() * 80) + 1);
       }
-      gameState.winningNumbers = Array.from(generatedNumbers);
+      Game.winningNumbers = Array.from(generatedNumbers);
     }
 
-    console.log("Winning numbers selected:", gameState.winningNumbers);
+    console.log("Winning numbers selected:", Game.winningNumbers);
     UserManager.getInstance().brodcast({
       type: "WINNING_NUMBERS",
-      numbers: gameState.winningNumbers,
+      numbers: Game.winningNumbers,
     });
-  }
-
-  public announceResults() {
-    Object.values(UserManager.getInstance()._user).forEach((user) => {
-      const matches = user.betNumbers.filter((num) =>
-        gameState.winningNumbers.includes(num)
-      ).length;
-
-      if (matches > 0) {
-        const payout = 50 * matches;
-        user.balance += payout;
-
-        // Send result to the individual user
-        user.send({
-          type: "RESULT",
-          matches: matches,
-          amountWon: payout,
-          balance: user.balance,
-        });
-      }
-    });
-
-    console.log("Results announced");
   }
 }
 

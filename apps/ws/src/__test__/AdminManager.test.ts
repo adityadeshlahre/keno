@@ -1,6 +1,7 @@
 import { AdminManager } from "src/AdminManager";
-import gameState from "../GameState";
+import Game from "../GameState";
 import { WebSocket, WebSocketServer } from "ws";
+import { GameStatus } from "@repo/types";
 
 const server = new WebSocketServer({ port: 3344 });
 let wsMock: WebSocket;
@@ -33,24 +34,24 @@ describe("AdminController", () => {
 
   beforeEach(() => {
     // Reset game state before each test
-    gameState.status = "inactive";
-    gameState.bets = [];
-    gameState.winningNumbers = [];
+    Game.status = GameStatus.Inactive;
+    Game.bets = [];
+    Game.winningNumbers = [];
   });
 
   test("should start the game", () => {
     adminController.startGame();
 
-    expect(gameState.status).toBe("active");
-    expect(gameState.bets).toEqual([]);
-    expect(gameState.winningNumbers).toEqual([]);
+    expect(Game.status).toBe("active");
+    expect(Game.bets).toEqual([]);
+    expect(Game.winningNumbers).toEqual([]);
   });
 
   test("should stop the game", () => {
-    gameState.status = "active"; // Set initial status as active
+    Game.status = GameStatus.Inactive; // Set initial status as active
     adminController.stopGame();
 
-    expect(gameState.status).toBe("inactive");
+    expect(Game.status).toBe("inactive");
   });
 
   test("should select 20 winning numbers", () => {
@@ -58,7 +59,7 @@ describe("AdminController", () => {
       1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
     ]);
 
-    expect(gameState.winningNumbers).toEqual([
+    expect(Game.winningNumbers).toEqual([
       1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
     ]);
   });
@@ -66,8 +67,8 @@ describe("AdminController", () => {
   test("should generate 20 random winning numbers if none provided", () => {
     adminController.selectWinningNumbers();
 
-    expect(gameState.winningNumbers.length).toBe(20);
-    gameState.winningNumbers.forEach((num) => {
+    expect(Game.winningNumbers.length).toBe(20);
+    Game.winningNumbers.forEach((num) => {
       expect(num).toBeGreaterThanOrEqual(1);
       expect(num).toBeLessThanOrEqual(80);
     });
@@ -81,7 +82,7 @@ describe("AdminController", () => {
       balance: 1000,
     };
 
-    gameState.bets.push(userBet);
+    Game.bets.push(userBet);
 
     // Admin selects winning numbers
     adminController.selectWinningNumbers([

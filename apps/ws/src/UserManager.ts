@@ -2,6 +2,7 @@ import { WebSocket } from "ws";
 import { User } from "./User";
 import { GameStatus, OutgoingMessages } from "@repo/types";
 import AdminManager from "./AdminManager";
+import Game from "./GameState";
 
 let ID: number = 0;
 export class UserManager {
@@ -18,18 +19,46 @@ export class UserManager {
     return this._instance;
   }
 
-  public connectUser(ws: WebSocket) {
+  public connectUser(ws: WebSocket, isAdmin?: boolean) {
     const initialBalance: number = 1000;
-    const id = ID++;
-    const user = new User(id, ws);
+    const id = ID;
+    const user = new User(id, ws, isAdmin ? true : false);
     this._user[id] = user;
 
     user.send({
       type: "CONNECTED",
       balance: initialBalance,
-      state: AdminManager.getInstance().state,
+      state: AdminManager.getInstance().GameState(),
     });
+    ID++;
     ws.on("close", () => this.removeUser(id));
+  }
+
+  public announceResults() {
+    const winningSet = new Set(Game.winningNumbers);
+
+    Object.values(this._user).forEach((user) => {
+      const uniqueBets = new Set(user.betNumbers);
+      console.log("Unique Bets:", uniqueBets);
+      const matches = [...uniqueBets].filter((num) =>
+        winningSet.has(num)
+      ).length;
+
+      console.log("Matches:", matches);
+
+      if (matches > 0) {
+        const payout = 50 * matches;
+        user.balance += payout;
+
+        // Send result to the individual user
+        user.send({
+          type: "RESULT",
+          matches: matches,
+          amountWon: payout,
+          balance: user.balance,
+        });
+      }
+    });
   }
 
   public brodcast(message: OutgoingMessages, id?: number) {
@@ -46,23 +75,19 @@ export class UserManager {
   }
 
   public placeBet(
+    id: number,
     ws: WebSocket,
-    betNumbers: Number[],
-    balance: number,
-    amount: number
+    betNumbers: number[],
+    balance?: number,
+    amount?: number
   ) {
-    // const id = ID;
-
-    // const user = new User(id, ws);
-    // this._user[id] = user;
-
-    const user = Object.values(this._user).find((u) => u.ws === ws);
+    const user = this._user[id];
     if (!user) {
       ws.send(JSON.stringify({ type: "error", message: "User not found" }));
       return;
     }
 
-    if (AdminManager.getInstance().state === GameStatus.Inactive) {
+    if (AdminManager.getInstance().GameState() === GameStatus.Inactive) {
       user.send({ type: "error", message: "Game is not active" });
       return;
     }
@@ -78,7 +103,7 @@ export class UserManager {
 
     user.send({
       type: "BET_PLACED",
-      numbers: betNumbers,
+      betNumbers: betNumbers,
       remainingBalance: user.balance,
     });
     console.log("Bet placed by user");
@@ -86,8 +111,6 @@ export class UserManager {
 
   public getUserBalance(ws: WebSocket) {
     const user = Object.values(this._user).find((u) => u.ws === ws);
-    // const user = new User(id, ws);
-    // this._user[id] = user;
     if (!user) {
       ws.send(JSON.stringify({ type: "error", message: "User not found" }));
       return;

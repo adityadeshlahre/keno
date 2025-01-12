@@ -8,7 +8,7 @@ export type IncomingMessages =
     }
   | {
       type: "BET";
-      betNumbers: Number[];
+      betNumbers: number[];
     }
   | {
       type: "BALANCE";
@@ -20,8 +20,11 @@ export type IncomingMessages =
       type: "STOP_GAME";
     }
   | {
+      type: "RESET_GAME";
+    }
+  | {
       type: "END_GAME";
-      winnigNumbers: Number[];
+      winnigNumbers: number[];
     };
 
 export type OutgoingMessages =
@@ -46,11 +49,11 @@ export type OutgoingMessages =
     }
   | {
       type: "WINNING_NUMBERS";
-      numbers: Number[];
+      numbers: number[];
     }
   | {
       type: "BET_PLACED";
-      numbers: Number[];
+      betNumbers: number[];
       remainingBalance: number;
     }
   | {
@@ -65,11 +68,11 @@ export type OutgoingMessages =
     }
   | {
       type: "WINNING_NUMBERS";
-      numbers: Number[];
+      numbers: number[];
     };
 
 export enum GameStatus {
-  "Inactive",
-  "Active",
-  "GameOver",
+  "Inactive" = "Inactive",
+  "Active" = "Active",
+  "GameOver" = "GameOver",
 }

@@ -1,6 +1,7 @@
 import UserController from "../UserManager";
-import gameState from "../GameState";
+import Game from "../GameState";
 import { WebSocket, WebSocketServer } from "ws";
+import { GameStatus } from "@repo/types";
 
 const server = new WebSocketServer({ port: 1122 });
 let wsMock: WebSocket;
@@ -8,6 +9,8 @@ let wsMock: WebSocket;
 const userController = UserController.getInstance();
 
 jest.setTimeout(10000);
+
+let ID: number = 0;
 
 describe("UserController", () => {
   beforeAll(async () => {
@@ -27,15 +30,15 @@ describe("UserController", () => {
 
   beforeEach(() => {
     // Reset game state before each test
-    gameState.status = "inactive";
-    gameState.bets = [];
-    gameState.winningNumbers = [];
+    Game.status = GameStatus.Inactive;
+    Game.bets = [];
+    Game.winningNumbers = [];
   });
 
   test("should connect a user with an initial balance", () => {
     userController.connectUser(wsMock);
 
-    const user = gameState.bets.find((user) => user.socket === wsMock);
+    const user = Game.bets.find((user) => user.socket === wsMock);
 
     expect(user).toBeDefined();
     expect(user?.balance).toBe(1000);
@@ -51,13 +54,13 @@ describe("UserController", () => {
   });
 
   test("should allow user to place a bet", () => {
-    gameState.status = "active";
+    Game.status = GameStatus.Inactive;
     userController.connectUser(wsMock);
 
     const betNumbers = [1, 2, 3, 4, 5];
-    userController.placeBet(wsMock, betNumbers); //bet placed
+    userController.placeBet(ID, wsMock, betNumbers); //bet placed
 
-    const user = gameState.bets.find((user) => user.socket === wsMock);
+    const user = Game.bets.find((user) => user.socket === wsMock);
     console.log(user?.numbers);
     expect(user?.numbers).toEqual(betNumbers);
     expect(user?.balance).toBe(1000 - 50 * betNumbers.length); // 10$ per number
@@ -73,11 +76,11 @@ describe("UserController", () => {
   });
 
   test("should reject bet if game is inactive", () => {
-    gameState.status = "inactive";
+    Game.status = GameStatus.Inactive;
     userController.connectUser(wsMock);
 
     const betNumbers = [1, 2, 3, 4, 5];
-    userController.placeBet(wsMock, betNumbers);
+    userController.placeBet(ID, wsMock, betNumbers);
 
     const sentMessage = JSON.parse((wsMock.send as jest.Mock).mock.calls[4][0]);
     expect(sentMessage).toEqual(
@@ -90,11 +93,11 @@ describe("UserController", () => {
 
   test("should reject bet if user has insufficient funds", () => {
     userController.connectUser(wsMock);
-    gameState.status = "active";
+    Game.status = GameStatus.Active;
     const range = Array.from({ length: 80 }, (_, i) => i + 1); // [1, 2, ..., 80]
     const shuffled = range.sort(() => Math.random() - 0.5); // Shuffle the array
     const betNumbers = shuffled.slice(0, 21); // Pick the first 21 numbers
-    userController.placeBet(wsMock, betNumbers);
+    userController.placeBet(ID, wsMock, betNumbers);
     const sentMessage = JSON.parse((wsMock.send as jest.Mock).mock.calls[6][0]);
     console.log(sentMessage);
     expect(sentMessage).toEqual(
@@ -122,9 +125,9 @@ describe("UserController", () => {
   test("should disconnect a user", () => {
     userController.connectUser(wsMock);
 
-    userController.disconnectUser(wsMock);
+    userController.removeUser(1);
 
-    const user = gameState.bets.find((user) => user.socket === wsMock);
+    const user = Game.bets.find((user) => user.socket === wsMock);
 
     expect(user).toBeUndefined();
     console.log("User disconnected successfully");
