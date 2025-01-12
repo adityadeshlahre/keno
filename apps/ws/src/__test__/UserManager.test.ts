@@ -1,4 +1,4 @@
-import UserController from "../controllers/UserManager";
+import UserController from "../UserManager";
 import gameState from "../GameState";
 import { WebSocket, WebSocketServer } from "ws";
 

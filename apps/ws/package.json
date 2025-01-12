@@ -4,7 +4,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "esbuild ./src/index.ts --bundle --platform=node --outfile=dist/index.js",
-    "start": "node ./dist/index.js",
+    "start": "esbuild ./src/index.ts --bundle --platform=node --outfile=dist/index.js && node ./dist/index.js",
     "dev": "nodemon --watch src --ext ts --exec ts-node src/index.ts",
     "clean": "rimraf dist",
     "lint": "eslint src/",

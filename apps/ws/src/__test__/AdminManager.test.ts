@@ -1,11 +1,11 @@
-import { AdminController } from "src/controllers/AdminManager";
+import { AdminManager } from "src/AdminManager";
 import gameState from "../GameState";
 import { WebSocket, WebSocketServer } from "ws";
 
 const server = new WebSocketServer({ port: 3344 });
 let wsMock: WebSocket;
 
-const adminController = AdminController.getInstance();
+const adminController = AdminManager.getInstance();
 
 jest.setTimeout(10000);
 

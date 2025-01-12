@@ -1,19 +1,20 @@
+import { GameStatus } from "@repo/types";
 import { WebSocket } from "ws";
 
 export interface User {
   socket: WebSocket;
-  numbers: number[];
+  numbers: Number[];
   balance: number;
 }
 
 export interface GameState {
-  status: "active" | "inactive";
+  status: GameStatus;
   bets: { socket: WebSocket; numbers: number[]; balance: number }[];
-  winningNumbers: number[];
+  winningNumbers: Number[];
 }
 
 const gameState: GameState = {
-  status: "inactive",
+  status: GameStatus.Inactive,
   bets: [],
   winningNumbers: [],
 };
