@@ -1,7 +1,7 @@
 {
   "extends": "@repo/typescript-config/base.json",
   "exclude": ["node_modules"],
-  "include": ["src/**/*.ts", "index.ts"],
+  "include": ["src/**/*.ts"],
   "compilerOptions": {
     "lib": ["ES2023", "dom", "dom.iterable", "esnext"],
     // "module": "Node16",

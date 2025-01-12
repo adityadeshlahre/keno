@@ -18,10 +18,11 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
-    // "paths": {
-    //   "ui": ["./../../packages/ui/"]
-    // } // this might be needed
+    "noFallthroughCasesInSwitch": true,
+    "paths": {
+      "@repo/ui": ["./../../packages/ui/*"],
+      "@repo/types": ["./../../packages/types/*"]
+    } // this might be needed
   },
   "include": ["src"]
 }
