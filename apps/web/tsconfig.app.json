@@ -19,6 +19,8 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
+    "noImplicitAny": false,
+    "baseUrl": ".",
     "paths": {
       "@repo/ui": ["./../../packages/ui/*"],
       "@repo/types": ["./../../packages/types/*"]
