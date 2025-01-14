@@ -1,4 +1,4 @@
-import { AdminManager } from "src/AdminManager";
+import AdminManager from "../AdminManager";
 import Game from "../GameState";
 import { WebSocket, WebSocketServer } from "ws";
 import { GameStatus } from "@repo/types";
@@ -6,11 +6,11 @@ import { GameStatus } from "@repo/types";
 const server = new WebSocketServer({ port: 3344 });
 let wsMock: WebSocket;
 
-const adminController = AdminManager.getInstance();
+const adminManager = AdminManager.getInstance();
 
 jest.setTimeout(10000);
 
-describe("AdminController", () => {
+describe("AdminManager", () => {
   console.log("beforeAll");
   beforeAll(async () => {
     server.on("connection", (ws: WebSocket) => {
@@ -40,7 +40,7 @@ describe("AdminController", () => {
   });
 
   test("should start the game", () => {
-    adminController.startGame();
+    adminManager.startGame();
 
     expect(Game.status).toBe("active");
     expect(Game.bets).toEqual([]);
@@ -49,13 +49,13 @@ describe("AdminController", () => {
 
   test("should stop the game", () => {
     Game.status = GameStatus.Inactive; // Set initial status as active
-    adminController.stopGame();
+    adminManager.stopGame();
 
     expect(Game.status).toBe("inactive");
   });
 
   test("should select 20 winning numbers", () => {
-    adminController.selectWinningNumbers([
+    adminManager.selectWinningNumbers([
       1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
     ]);
 
@@ -65,7 +65,7 @@ describe("AdminController", () => {
   });
 
   test("should generate 20 random winning numbers if none provided", () => {
-    adminController.selectWinningNumbers();
+    adminManager.selectWinningNumbers();
 
     expect(Game.winningNumbers.length).toBe(20);
     Game.winningNumbers.forEach((num) => {
@@ -85,11 +85,11 @@ describe("AdminController", () => {
     Game.bets.push(userBet);
 
     // Admin selects winning numbers
-    adminController.selectWinningNumbers([
+    adminManager.selectWinningNumbers([
       1, 2, 3, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
     ]);
 
-    adminController.announceResults();
+    adminManager.announceResults();
 
     // Check if user received updated balance
     const sentMessage = JSON.parse((wsMock.send as jest.Mock).mock.calls[2][0]);

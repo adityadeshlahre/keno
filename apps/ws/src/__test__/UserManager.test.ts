@@ -1,4 +1,4 @@
-import UserController from "../UserManager";
+import UserManager from "../UserManager";
 import Game from "../GameState";
 import { WebSocket, WebSocketServer } from "ws";
 import { GameStatus } from "@repo/types";
@@ -6,13 +6,16 @@ import { GameStatus } from "@repo/types";
 const server = new WebSocketServer({ port: 1122 });
 let wsMock: WebSocket;
 
-const userController = UserController.getInstance();
+const userManager = UserManager.getInstance();
 
 jest.setTimeout(10000);
 
+// eslint-disable-next-line prefer-const
 let ID: number = 0;
+const INITIAL_BALANCE = 1000;
+const BET_COST_PER_NUMBER = 50;
 
-describe("UserController", () => {
+describe("UserManager", () => {
   beforeAll(async () => {
     server.on("connection", (ws: WebSocket) => {
       ws.send(JSON.stringify({ type: "User Server" }));
@@ -33,12 +36,15 @@ describe("UserController", () => {
     Game.status = GameStatus.Inactive;
     Game.bets = [];
     Game.winningNumbers = [];
+    userManager._user = {};
   });
 
   test("should connect a user with an initial balance", () => {
-    userController.connectUser(wsMock);
+    userManager.connectUser(wsMock);
 
-    const user = Game.bets.find((user) => user.socket === wsMock);
+    const user = Object.values(userManager._user).find(
+      (user) => user.ws === wsMock
+    );
 
     expect(user).toBeDefined();
     expect(user?.balance).toBe(1000);
@@ -54,22 +60,27 @@ describe("UserController", () => {
   });
 
   test("should allow user to place a bet", () => {
+    const user = userManager._user[ID];
     Game.status = GameStatus.Inactive;
-    userController.connectUser(wsMock);
+    userManager.connectUser(wsMock);
 
     const betNumbers = [1, 2, 3, 4, 5];
-    userController.placeBet(ID, wsMock, betNumbers); //bet placed
+    userManager.placeBet(ID, wsMock, betNumbers);
 
-    const user = Game.bets.find((user) => user.socket === wsMock);
-    console.log(user?.numbers);
-    expect(user?.numbers).toEqual(betNumbers);
-    expect(user?.balance).toBe(1000 - 50 * betNumbers.length); // 10$ per number
-    const sentMessage = JSON.parse((wsMock.send as jest.Mock).mock.calls[2][0]);
+    // const user = Object.values(userManager._user).find(
+    //   (user) => user.ws === wsMock
+    // );
+
+    expect(user?.betNumbers).toEqual(betNumbers);
+    expect(user?.balance).toBe(
+      INITIAL_BALANCE - BET_COST_PER_NUMBER * betNumbers.length
+    ); // 10$ per number
+    const sentMessage = JSON.parse((wsMock.send as jest.Mock).mock.calls[1][0]);
 
     expect(sentMessage).toEqual(
       expect.objectContaining({
         type: "BET_PLACED",
-        numbers: betNumbers,
+        betNumbers: betNumbers,
         remainingBalance: user?.balance,
       })
     );
@@ -77,10 +88,10 @@ describe("UserController", () => {
 
   test("should reject bet if game is inactive", () => {
     Game.status = GameStatus.Inactive;
-    userController.connectUser(wsMock);
+    userManager.connectUser(wsMock);
 
     const betNumbers = [1, 2, 3, 4, 5];
-    userController.placeBet(ID, wsMock, betNumbers);
+    userManager.placeBet(ID, wsMock, betNumbers);
 
     const sentMessage = JSON.parse((wsMock.send as jest.Mock).mock.calls[4][0]);
     expect(sentMessage).toEqual(
@@ -92,12 +103,12 @@ describe("UserController", () => {
   });
 
   test("should reject bet if user has insufficient funds", () => {
-    userController.connectUser(wsMock);
+    userManager.connectUser(wsMock);
     Game.status = GameStatus.Active;
     const range = Array.from({ length: 80 }, (_, i) => i + 1); // [1, 2, ..., 80]
     const shuffled = range.sort(() => Math.random() - 0.5); // Shuffle the array
     const betNumbers = shuffled.slice(0, 21); // Pick the first 21 numbers
-    userController.placeBet(ID, wsMock, betNumbers);
+    userManager.placeBet(ID, wsMock, betNumbers);
     const sentMessage = JSON.parse((wsMock.send as jest.Mock).mock.calls[6][0]);
     console.log(sentMessage);
     expect(sentMessage).toEqual(
@@ -109,9 +120,9 @@ describe("UserController", () => {
   });
 
   test("should allow user to check balance", () => {
-    userController.connectUser(wsMock);
+    userManager.connectUser(wsMock);
 
-    userController.getUserBalance(wsMock);
+    userManager.getUserBalance(wsMock);
 
     const sentMessage = JSON.parse((wsMock.send as jest.Mock).mock.calls[8][0]);
     expect(sentMessage).toEqual(
@@ -123,11 +134,13 @@ describe("UserController", () => {
   });
 
   test("should disconnect a user", () => {
-    userController.connectUser(wsMock);
+    userManager.connectUser(wsMock);
 
-    userController.removeUser(1);
+    userManager.removeUser(ID);
 
-    const user = Game.bets.find((user) => user.socket === wsMock);
+    const user = Object.values(userManager._user).find(
+      (user) => user.id === ID
+    );
 
     expect(user).toBeUndefined();
     console.log("User disconnected successfully");

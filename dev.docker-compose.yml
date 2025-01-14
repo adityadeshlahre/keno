@@ -39,6 +39,26 @@ services:
     networks:
       - app_network
 
+  ws:
+    build:
+      context: .
+      dockerfile: ./apps/ws/Dockerfile
+    container_name: quick-start-ws
+    expose:
+      - 3000
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./apps/ws/:/app/apps/ws
+    environment:
+      - DATABASE_URL=postgresql://opensource:sourceopen@postgres:5432/fasoshop
+      - PORT=3000
+      - UI_PORT=5173
+    depends_on:
+      - postgres
+    networks:
+      - app_network
+
   postgres:
     image: postgres:latest
     container_name: fasoshop
