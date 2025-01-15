@@ -7,6 +7,7 @@ import Game from "./GameState";
 let ID: number = 0;
 export class UserManager {
   public _user: { [key: string]: User } = {};
+  private _admin: { [key: string]: User } = {};
 
   private static _instance: UserManager;
 
@@ -20,14 +21,35 @@ export class UserManager {
   }
 
   public connectUser(ws: WebSocket, isAdmin?: boolean) {
-    const initialBalance: number = 1000;
+    const existingUser = Object.values(this._user).find((u) => u.ws === ws);
+
+    if (existingUser) {
+      if (isAdmin) {
+        existingUser.isAdmin = true;
+        AdminManager.getInstance().addAdmin(existingUser);
+      }
+      ws.send(
+        JSON.stringify({
+          type: "CONNECTED",
+          balance: existingUser.balance,
+          state: AdminManager.getInstance().GameState(),
+        })
+      );
+      return;
+    }
+
+    // new user
     const id = ID;
     const user = new User(id, ws, isAdmin ? true : false);
     this._user[id] = user;
 
+    if (isAdmin) {
+      AdminManager.getInstance().addAdmin(user);
+    }
+
     user.send({
       type: "CONNECTED",
-      balance: initialBalance,
+      balance: user.balance,
       state: AdminManager.getInstance().GameState(),
     });
     ID++;
@@ -50,11 +72,11 @@ export class UserManager {
   public placeBet(
     id: number,
     ws: WebSocket,
-    betNumbers: number[]
+    userBets: { numbers: number[]; amount: number }
     // balance?: number,
     // amount?: number
   ) {
-    if (!betNumbers || betNumbers.length === 0) {
+    if (!userBets || userBets.numbers.length === 0) {
       console.log(`Invalid bet numbers provided by user ${id}`);
       ws.send(
         JSON.stringify({ type: "error", message: "No bet numbers provided" })
@@ -62,15 +84,22 @@ export class UserManager {
       return;
     }
 
-    const user =
-      this._user[id] || Object.values(this._user).find((u) => u.ws === ws);
+    const user = this._user[id];
+
+    // const user = Object.values(this._user).find((u) => u.ws === ws);
 
     if (!user) {
       ws.send(JSON.stringify({ type: "error", message: "User not found" }));
       return;
     }
 
-    if (user.betNumbers.length === 20) {
+    const receivedBetsCount = new Set(userBets.numbers).size;
+    const existingBetsCount = new Set(user.bets.flatMap((bet) => bet.numbers))
+      .size;
+
+    console.log(existingBetsCount, "**", receivedBetsCount);
+
+    if (receivedBetsCount + existingBetsCount > 20) {
       user.send({
         type: "error",
         message: "You have already placed MAX number of bet",
@@ -83,18 +112,44 @@ export class UserManager {
       return;
     }
 
-    const betAmount = 50 * betNumbers.length;
-    if (user.balance < betAmount) {
+    const totalBetAmount = userBets.numbers.length * userBets.amount;
+
+    if (user.balance < totalBetAmount) {
       user.send({ type: "error", message: "Insufficient funds" });
       return;
     }
 
-    user.balance -= betAmount;
-    user.betNumbers = [...betNumbers];
+    // userBets.numbers.forEach((number) => {
+    if (user.balance >= totalBetAmount) {
+      user.balance -= totalBetAmount;
+      console.log(`Deducted ${userBets.amount} for number ${userBets.numbers}`);
+    } else {
+      user.send({
+        type: "error",
+        message: `Insufficient funds for placing bet on number ${userBets.numbers}`,
+      });
+      return;
+    }
+    // });
+
+    const existingBetAmount = user.bets.find(
+      (x) => x.amount === userBets.amount
+    );
+
+    if (existingBetAmount) {
+      existingBetAmount.numbers = Array.from(
+        new Set([...existingBetAmount.numbers, ...userBets.numbers])
+      );
+    } else {
+      // Add new bet if no existing bet with the same amount
+      user.bets.push(userBets);
+    }
+
+    console.log(user.bets);
 
     user.send({
       type: "BET_PLACED",
-      betNumbers: user.betNumbers,
+      bets: user.bets,
       remainingBalance: user.balance,
     });
   }

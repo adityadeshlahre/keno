@@ -9,7 +9,7 @@ export class User {
   public ws: WebSocket;
   public wonAmount: number;
   public isAdmin: boolean;
-  public betNumbers: number[];
+  public bets: { numbers: number[]; amount: number }[];
 
   constructor(id: number, ws: WebSocket, isAdmin: boolean) {
     this.id = id;
@@ -17,7 +17,7 @@ export class User {
     this.ws = ws;
     this.wonAmount = 0;
     this.isAdmin = isAdmin;
-    this.betNumbers = [];
+    this.bets = [];
     this.inithandler();
   }
 
@@ -41,10 +41,25 @@ export class User {
         // }
 
         if (message.type === "ADMIN_CONNECT" && message.password === "admin") {
-          userManager.connectUser(this.ws, true);
-          this.ws.send(
-            JSON.stringify({ type: "ADMIN_CONNECTED", userId: this.id })
+          const existingUser = Object.values(userManager._user).find(
+            (u) => u.ws === this.ws
           );
+
+          if (existingUser) {
+            existingUser.isAdmin = true;
+            adminManager.addAdmin(existingUser);
+            this.ws.send(
+              JSON.stringify({
+                type: "ADMIN_CONNECTED",
+                userId: existingUser.id,
+              })
+            );
+          } else {
+            userManager.connectUser(this.ws, true);
+            this.ws.send(
+              JSON.stringify({ type: "ADMIN_CONNECTED", userId: this.id })
+            );
+          }
         }
 
         if (this.isAdmin && message.type === "START_GAME") {
@@ -66,10 +81,23 @@ export class User {
         if (this.isAdmin && message.type === "END_GAME") {
           if (adminManager.GameState() === GameStatus.Inactive) {
             adminManager.ChangeState(GameStatus.GameOver);
-            if (this.betNumbers !== message.winnigNumbers) {
+            if (
+              this.bets.length !== 0 ||
+              this.bets.every(
+                (bet) => bet.numbers.length === 0 || bet.amount === 0
+              )
+            ) {
+              // improtant condtion you missed
               adminManager.selectWinningNumbers(message.winnigNumbers);
               this.ws.send(JSON.stringify({ type: "GAME_ENDED" }));
               adminManager.announceResults();
+            } else {
+              this.ws.send(
+                JSON.stringify({
+                  type: "BET_NEXT_ROUND",
+                  message: "Bet in next round.",
+                })
+              );
             }
           }
         }
@@ -84,11 +112,10 @@ export class User {
 
         if (message.type === "BET") {
           if (adminManager.GameState() === GameStatus.Active) {
-            this.betNumbers = message.betNumbers;
             userManager.placeBet(
               this.id,
               this.ws,
-              this.betNumbers
+              message.betNumbers
               // this.balance,
               // this.amount
             );

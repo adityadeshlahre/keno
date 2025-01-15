@@ -8,7 +8,7 @@ export type IncomingMessages =
     }
   | {
       type: "BET";
-      betNumbers: number[];
+      betNumbers: { numbers: number[]; amount: number };
     }
   | {
       type: "BALANCE";
@@ -51,12 +51,20 @@ export type OutgoingMessages =
       type: "RESET_GAME";
     }
   | {
-      type: "WINNING_NUMBERS";
-      numbers: number[];
+      type: "WIN";
+      wonAmount: number;
+      balance: number;
+      winningNumbers: number[];
+    }
+  | {
+      type: "LOSS";
+      wonAmount: number;
+      balance: number;
+      winningNumbers: number[];
     }
   | {
       type: "BET_PLACED";
-      betNumbers: number[];
+      bets: { numbers: number[]; amount: number }[];
       remainingBalance: number;
     }
   | {
@@ -65,9 +73,10 @@ export type OutgoingMessages =
     }
   | {
       type: "RESULT";
-      matches: number;
+      numberOfMatches: number;
+      playerMatchedNumbers: number[];
+      playerBettedNumbers: number[];
       wonAmount: number;
-      balance: number;
     }
   | {
       type: "WINNING_NUMBERS";

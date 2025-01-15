@@ -3,19 +3,23 @@ import { WebSocket } from "ws";
 
 export interface User {
   socket: WebSocket;
-  betNumbers: number[];
+  placedBets: { number: number; amount: number }[];
   balance: number;
 }
 
 export interface GameState {
   status: GameStatus;
-  bets: { socket: WebSocket; numbers: number[]; balance: number }[];
+  player: {
+    socket: WebSocket;
+    placedBets: { number: number; amount: number }[];
+    balance: number;
+  }[];
   winningNumbers: number[];
 }
 
 const Game: GameState = {
   status: GameStatus.Inactive,
-  bets: [],
+  player: [],
   winningNumbers: [],
 };
 

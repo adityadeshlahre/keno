@@ -1,11 +1,13 @@
 import { GameStatus } from "@repo/types";
 import Game from "./GameState";
 import UserManager from "./UserManager";
+import { User } from "./User";
 
 export class AdminManager {
   private state: GameStatus = GameStatus.Inactive;
   private winninNumbers: number[] = Game.winningNumbers;
   private static _instance: AdminManager;
+  private _admins: User[] = [];
 
   private constructor() {}
 
@@ -14,6 +16,14 @@ export class AdminManager {
       this._instance = new AdminManager();
     }
     return this._instance;
+  }
+
+  public addAdmin(user: User) {
+    this._admins.push(user);
+  }
+
+  public isAdmin(user: User): boolean {
+    return this._admins.includes(user);
   }
 
   public GameState(): GameStatus {
@@ -30,7 +40,7 @@ export class AdminManager {
 
   public startGame() {
     this.state = GameStatus.Active;
-    Game.bets = [];
+    Game.player = [];
     Game.winningNumbers = [];
 
     UserManager.getInstance().brodcast({ type: "GAME_STARTED" });
@@ -46,7 +56,7 @@ export class AdminManager {
     Game.winningNumbers = [];
     Object.values(UserManager.getInstance()._user).forEach((user) => {
       user.wonAmount = 0;
-      user.betNumbers = [];
+      user.bets = [];
     });
     UserManager.getInstance().brodcast({ type: "RESET_GAME" });
   }
@@ -71,33 +81,51 @@ export class AdminManager {
 
   public announceResults() {
     const winningSet = new Set(Game.winningNumbers.map(Number));
-    const userManager = UserManager.getInstance();
+    // const userManager = Object.values(UserManager.getInstance()._user);
 
     Object.values(UserManager.getInstance()._user).forEach((user) => {
-      if (!user.betNumbers || user.betNumbers.length === 0) {
+      if (!user.bets || user.bets.length === 0) {
         console.log(`User ${user.id} has no bets`);
         return;
       }
 
-      const matches: number = user.betNumbers
-        .map(Number)
-        .filter((num) => winningSet.has(num)).length;
+      const betMap = new Map<number, number>();
+      user.bets.forEach((bet) => {
+        bet.numbers.forEach((num) => {
+          betMap.set(num, bet.amount);
+        });
+      });
 
-      if (matches > 0) {
-        const payout = 50 * matches;
-        user.balance += payout;
+      let totalPayout = 0;
+      const matchedNumbers: number[] = [];
+
+      winningSet.forEach((winningNumber) => {
+        if (betMap.has(winningNumber)) {
+          const betAmount = betMap.get(winningNumber) || 0;
+          totalPayout += betAmount * 2; // Double the bet amount for payout
+          matchedNumbers.push(winningNumber);
+        }
+      });
+
+      if (totalPayout > 0) {
+        // user.balance += totalPayout;
 
         user.send({
           type: "RESULT",
-          matches: matches,
-          wonAmount: payout,
-          balance: user.balance,
+          numberOfMatches: matchedNumbers.length,
+          playerMatchedNumbers: matchedNumbers,
+          playerBettedNumbers: Array.from(betMap.keys()),
+          wonAmount: totalPayout,
         });
+
+        user.won(totalPayout, Game.winningNumbers);
+      } else {
+        user.lost(Game.winningNumbers);
       }
     });
 
     Object.values(UserManager.getInstance()._user).forEach((user) => {
-      user.betNumbers = [];
+      user.bets = [];
       user.wonAmount = 0;
     });
   }
