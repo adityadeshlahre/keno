@@ -5,8 +5,8 @@ services:
       dockerfile: ./apps/web/Dockerfile.build
       args:
         DATABASE_URL: ${DATABASE_URL}
-    image: quick-start-web:latest
-    container_name: quick-start-web
+    image: keno-web:latest
+    container_name: keno-web
     expose:
       - 5173
     ports:
@@ -24,8 +24,8 @@ services:
       dockerfile: ./apps/server/Dockerfile.build
       args:
         DATABASE_URL: ${DATABASE_URL}
-    image: quick-start-server:latest
-    container_name: quick-start-server
+    image: keno-server:latest
+    container_name: keno-server
     expose:
       - 3000
     ports:
@@ -43,12 +43,12 @@ services:
       dockerfile: ./apps/ws/Dockerfile.build
       args:
         DATABASE_URL: ${DATABASE_URL}
-    image: quick-start-ws:latest
-    container_name: quick-start-ws
+    image: keno-ws:latest
+    container_name: keno-ws
     expose:
-      - 3000
+      - 8080
     ports:
-      - "3000:3000"
+      - "8080:8080"
     volumes:
       - ./apps/ws/:/app/apps/ws
     environment:

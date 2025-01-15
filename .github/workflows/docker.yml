@@ -36,18 +36,23 @@ jobs:
 
       - name: Push web service image
         run: |
-          docker tag quick-start-web:latest ${{ secrets.DOCKERHUB_USERNAME }}/quick-start-web:latest
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/quick-start-web:latest
+          docker tag keno-web:latest ${{ secrets.DOCKERHUB_USERNAME }}/keno-web:latest
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/keno-web:latest
 
       - name: Push server service image
         run: |
-          docker tag quick-start-server:latest ${{ secrets.DOCKERHUB_USERNAME }}/quick-start-server:latest
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/quick-start-server:latest
+          docker tag keno-server:latest ${{ secrets.DOCKERHUB_USERNAME }}/keno-server:latest
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/keno-server:latest
+
+      - name: Push websocket service image
+        run: |
+          docker tag keno-ws:latest ${{ secrets.DOCKERHUB_USERNAME }}/keno-ws:latest
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/keno-ws:latest
 
       - name: Push full web-server image
         run: |
-          docker tag quick-start-full:latest ${{ secrets.DOCKERHUB_USERNAME }}/quick-start-full:latest
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/quick-start-full:latest
+          docker tag keno-full:latest ${{ secrets.DOCKERHUB_USERNAME }}/keno-full:latest
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/keno-full:latest
 
   render_deploy:
     name: Deploy to render

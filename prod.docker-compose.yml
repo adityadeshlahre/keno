@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: ./apps/web/Dockerfile.prod
-    container_name: quick-start-web-prod
+    container_name: keno-web-prod
     expose:
       - 5173
     ports:
@@ -23,7 +23,7 @@ services:
     build:
       context: .
       dockerfile: ./apps/server/Dockerfile.prod
-    container_name: quick-start-server-prod
+    container_name: keno-server-prod
     expose:
       - 3000
     ports:
@@ -43,7 +43,7 @@ services:
     build:
       context: .
       dockerfile: ./apps/ws/Dockerfile.prod
-    container_name: quick-start-ws-prod
+    container_name: keno-ws-prod
     expose:
       - 3000
     ports:

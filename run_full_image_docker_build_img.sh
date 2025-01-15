@@ -19,10 +19,10 @@ cleanup() {
     docker rm postgres-container
   fi
 
-  if docker ps -a --filter "name=quick-start-full" --format '{{.Names}}' | grep -q '^quick-start-full$'; then
+  if docker ps -a --filter "name=keno-full" --format '{{.Names}}' | grep -q '^keno-full$'; then
     echo "Stopping and removing application container..."
-    docker stop quick-start-full
-    docker rm quick-start-full
+    docker stop keno-full
+    docker rm keno-full
   fi
 
   exit 0
@@ -105,12 +105,12 @@ fi
 
 # Start the application container
 echo "Starting application container..."
-docker run -d --name quick-start-full --network temp_network \
+docker run -d --name keno-full --network temp_network \
     -e DATABASE_URL="postgresql://opensource:sourceopen@postgres-container:5432/fasoshop" \
     -e PORT="3000" \
     -e UI_PORT="5173" \
     -p 3000:3000 -p 5173:5173 \
-    quick-start-full:latest
+    keno-full:latest
 
 # Keep the script running and handle signals
 while true; do

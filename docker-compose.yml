@@ -3,14 +3,16 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: quick-start-full:latest
-    container_name: quick-start-full
+    image: keno-full:latest
+    container_name: keno-full
     expose:
       - 3000
       - 5173
+      - 8080
     ports:
       - "3000:3000"
       - "5173:5173"
+      - "8080:8080"
     volumes:
       - ./apps/web/:/app/apps/web
       - ./apps/server/:/app/apps/server

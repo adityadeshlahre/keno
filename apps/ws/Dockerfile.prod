@@ -50,6 +50,6 @@ WORKDIR /app
 # USER nodejs
 COPY --from=installer /app .
 
-EXPOSE 3000
+EXPOSE 8080
 
 CMD cd apps/ws/ && pnpm start

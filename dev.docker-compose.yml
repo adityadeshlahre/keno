@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: ./apps/web/Dockerfile
-    container_name: quick-start-web
+    container_name: keno-web
     expose:
       - 5173
     ports:
@@ -23,7 +23,7 @@ services:
     build:
       context: .
       dockerfile: ./apps/server/Dockerfile
-    container_name: quick-start-server
+    container_name: keno-server
     expose:
       - 3000
     ports:
@@ -43,16 +43,16 @@ services:
     build:
       context: .
       dockerfile: ./apps/ws/Dockerfile
-    container_name: quick-start-ws
+    container_name: keno-ws
     expose:
-      - 3000
+      - 8080
     ports:
-      - "3000:3000"
+      - "8080:8080"
     volumes:
       - ./apps/ws/:/app/apps/ws
     environment:
       - DATABASE_URL=postgresql://opensource:sourceopen@postgres:5432/fasoshop
-      - PORT=3000
+      - PORT=8080
       - UI_PORT=5173
     depends_on:
       - postgres
