@@ -11,6 +11,13 @@ export type IncomingMessages =
       betNumbers: { numbers: number[]; amount: number };
     }
   | {
+      type: "UNBET";
+      unBetNumbers: { numbers: number[]; amount: number };
+    }
+  | {
+      type: "CLEAR_BET";
+    }
+  | {
       type: "BALANCE";
     }
   | {
@@ -58,6 +65,9 @@ export type OutgoingMessages =
       type: "RESET_GAME";
     }
   | {
+      type: "BETS_CLEARED";
+    }
+  | {
       type: "WIN";
       wonAmount: number;
       balance: number;
@@ -71,6 +81,11 @@ export type OutgoingMessages =
     }
   | {
       type: "BET_PLACED";
+      bets: { numbers: number[]; amount: number }[];
+      remainingBalance: number;
+    }
+  | {
+      type: "BET_UNPLACED";
       bets: { numbers: number[]; amount: number }[];
       remainingBalance: number;
     }

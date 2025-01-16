@@ -155,6 +155,67 @@ export class UserManager {
     });
   }
 
+  public unPlaceBet(
+    id: number,
+    ws: WebSocket,
+    userBets: { numbers: number[]; amount: number }
+    // balance?: number,
+    // amount?: number
+  ) {
+    if (!userBets || userBets.numbers.length === 0) {
+      console.log(`Invalid bet numbers provided by user ${id}`);
+      ws.send(
+        JSON.stringify({ type: "error", message: "No bet numbers provided" })
+      );
+      return;
+    }
+
+    const user = this._user[id];
+
+    // const user = Object.values(this._user).find((u) => u.ws === ws);
+
+    if (!user) {
+      ws.send(JSON.stringify({ type: "error", message: "User not found" }));
+      return;
+    }
+
+    const { numbers: numbersToRemove, amount } = userBets;
+
+    const existingBet = user.bets.find((bet) => bet.amount === amount);
+
+    if (!existingBet) {
+      user.send({
+        type: "error",
+        message: "No bet found for the specified amount",
+      });
+      return;
+    }
+
+    // Remove the specified numbers from the bet's numbers array
+    existingBet.numbers = existingBet.numbers.filter(
+      (num) => !numbersToRemove.includes(num)
+    );
+
+    // Refund the user for the removed numbers
+    const refundAmount = numbersToRemove.length * amount;
+    user.balance += refundAmount;
+
+    // Remove the bet object entirely if no numbers remain
+    if (existingBet.numbers.length === 0) {
+      user.bets = user.bets.filter((bet) => bet !== existingBet);
+    }
+
+    console.log(`Removed numbers ${numbersToRemove} from user ${id}'s bets`);
+
+    console.log(user.bets);
+
+    user.send({
+      type: "BET_UNPLACED",
+      bets: user.bets,
+      remainingBalance: user.balance,
+    });
+  }
+
   public getUserBalance(ws: WebSocket) {
     const user = Object.values(this._user).find((u) => u.ws === ws);
     if (!user) {
@@ -163,6 +224,15 @@ export class UserManager {
     }
 
     user.send({ type: "BALANCE", balance: user.balance });
+  }
+
+  public clearBetsOfUser(id: number, ws: WebSocket) {
+    const user =
+      this._user[id] || Object.values(this._user).find((u) => u.ws === ws);
+
+    // const user = Object.values(this._user).find((u) => u.ws === ws);
+
+    user?.restBets();
   }
 }
 

@@ -132,8 +132,30 @@ export class User {
           }
         }
 
+        if (message.type === "UNBET") {
+          if (adminManager.GameState() === GameStatus.Active) {
+            userManager.unPlaceBet(
+              this.id,
+              this.ws,
+              message.unBetNumbers
+              // this.balance,
+              // this.amount
+            );
+          } else if (adminManager.GameState() === GameStatus.Inactive) {
+            this.ws.send(JSON.stringify({ type: "GAME_NOT_ACTIVE" }));
+          } else if (adminManager.GameState() === GameStatus.GameOver) {
+            this.ws.send(JSON.stringify({ type: "GAME_OVER" }));
+          } else {
+            this.ws.send(JSON.stringify({ type: "GAME_NOT_STARTED_YET" }));
+          }
+        }
+
         if (message.type === "BALANCE") {
           userManager.getUserBalance(this.ws);
+        }
+
+        if (message.type === "CLEAR_BET") {
+          userManager.clearBetsOfUser(this.id, this.ws);
         }
       } catch (err) {
         console.error("Invalid message format", err);
@@ -165,6 +187,16 @@ export class User {
         wonAmount: this.wonAmount,
         balance: this.balance,
         winningNumbers,
+      })
+    );
+  }
+
+  restBets() {
+    this.bets = [];
+    this.ws.send(
+      JSON.stringify({
+        type: "BETS_CLEARED",
+        message: "Cleard all previous bets of user",
       })
     );
   }
