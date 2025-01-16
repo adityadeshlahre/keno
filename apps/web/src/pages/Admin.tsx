@@ -1,5 +1,5 @@
 import { GameStatus } from "@repo/types/";
-import { useSocket } from "@/hooks/use-socket";
+import { useSocket } from "../hooks/use-socket";
 import { useEffect, useState } from "react";
 
 const Admin = () => {

@@ -6,7 +6,8 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "start": "vite build && vite preview --port 5173"
+    "start": "vite build && vite preview --port 5173",
+    "clean": "rimraf dist"
   },
   "dependencies": {
     "@repo/types": "workspace:*",

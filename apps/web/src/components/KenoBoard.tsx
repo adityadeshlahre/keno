@@ -3,7 +3,7 @@ import VanillaTilt from "vanilla-tilt";
 import { toast } from "sonner";
 import { Button } from "./ui/button";
 import { GameStatus } from "@repo/types";
-import { useSocket } from "@/hooks/use-socket";
+import { useSocket } from "./../hooks/use-socket";
 
 const MAX_SELECTIONS = 20;
 // const BET_AMOUNTS = [10, 20, 50, 100];
