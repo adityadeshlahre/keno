@@ -20,7 +20,7 @@ const AdminButton = () => {
   );
 
   useEffect(() => {
-    if (!loading) {
+    if (!loading && socket) {
       socket.onmessage = (event: any) => {
         const data = JSON.parse(event.data);
 

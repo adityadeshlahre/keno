@@ -6,48 +6,95 @@ import { GameStatus } from "@repo/types";
 import { useSocket } from "@/hooks/use-socket";
 
 const MAX_SELECTIONS = 20;
-const BET_AMOUNTS = [10, 20, 50, 100];
+// const BET_AMOUNTS = [10, 20, 50, 100];
+const BET_AMOUNTS = [50];
+
+//need to fix the edge case of the bet amount if(wrong Number) is removed which does not exist in the bet array, leads to wrong balance deduction + duplication of the bet amount
 
 const KenoBoard = () => {
   const { socket, loading } = useSocket();
   const [selectedNumbers, setSelectedNumbers] = useState<number[]>([]);
   const [selectedBet, setSelectedBet] = useState<number>(BET_AMOUNTS[0]);
-  const [currentSelecetdBet, setCurrentSelectedBet] = useState<number>(0);
-  const [currentSelecetdNumber, setCurrentSelectedNumber] = useState<number>(0);
+  const [currentSelecetdBet, setCurrentSelectedBet] = useState<number>(
+    BET_AMOUNTS[0]
+  ); // wiil be sent to ws
+  const [currentSelecetdNumber, setCurrentSelectedNumber] = useState<
+    number | null
+  >(null); // wiil be sent to ws
   const [currentGameStatus, setCurrentGameStatus] = useState<GameStatus>(
     GameStatus.Inactive
   );
   const [currentBalance, setCurrentBalance] = useState<number>(0);
+  const [theBets, setTheBets] = useState<
+    {
+      number: number[];
+      amount: number;
+    }[]
+  >([{ number: [], amount: currentSelecetdBet }]);
   const boardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (currentSelecetdNumber && currentSelecetdBet) {
-      socket.send(
-        JSON.stringify({
-          type: "BET",
-          betNumbers: {
-            numbers: [currentSelecetdNumber],
-            amount: currentSelecetdBet,
-          },
-        })
-      );
-    }
-  }, [currentSelecetdBet, currentSelecetdNumber]);
-
-  useEffect(() => {
-    if (socket) {
+    if (!loading && socket) {
       socket.onmessage = (event: any) => {
         const data = JSON.parse(event.data);
-        console.log(data);
         if (data.type === "CONNECTED") {
-          const e = data.balance;
-          console.log(typeof e);
           setCurrentBalance(data.balance);
           setCurrentGameStatus(data.state);
         }
+
+        if (data.type === "USER_BALANCE") {
+          setCurrentBalance(data.balance);
+        }
+
+        if (data.type === "GAME_STOPPED") {
+          setCurrentGameStatus(GameStatus.Inactive);
+          toast.error("Game is stopped");
+        }
+
+        if (data.type === "GAME_STARTED") {
+          setCurrentGameStatus(GameStatus.Active);
+          toast.success("Game is started");
+        }
+
+        if (data.type === "GAME_ENDED") {
+          setCurrentGameStatus(GameStatus.Inactive);
+          toast.success("Game is ended");
+        }
+
+        if (data.type === "GAME_RESET") {
+          setCurrentGameStatus(GameStatus.Inactive);
+          toast.success("Game is restarted");
+        }
+
+        if (data.type === "GAME_NOT_ACTIVE") {
+          toast.error("Game is not active");
+        }
+
+        if (data.type === "RESULT") {
+          toast.success(`
+            You won $${data.wonAmount}
+            numberOfMatches: ${data.numberOfMatches}
+            playerMatches: ${data.playerMatchedNumbers.join(", ")}
+            playerBetterNumbers: ${data.playerBetNumbers.join(", ")}
+            `);
+        }
+
+        if (data.type === "WIN") {
+          toast.success(`
+            You won $${data.wonAmount}
+            Updated balance: $${data.balance}`);
+        }
+
+        if (data.type === "INSUFFICIENT_FUNDS") {
+          toast.error("Insufficient funds");
+        }
+
+        if (data.type === "BET_PLACED") {
+          toast.success("Bet placed");
+        }
       };
     }
-  }, [socket]);
+  }, [socket, loading]);
 
   useEffect(() => {
     if (boardRef.current) {
@@ -70,6 +117,16 @@ const KenoBoard = () => {
       return;
     }
 
+    const isDeselected =
+      selectedNumbers.includes(number) || currentSelecetdNumber === number;
+
+    setCurrentSelectedNumber((prev) => {
+      if (prev === number) {
+        return null;
+      }
+      return number;
+    });
+
     setSelectedNumbers((prev) => {
       if (prev.includes(number)) {
         console.log("Number deselected:", number);
@@ -85,32 +142,102 @@ const KenoBoard = () => {
       console.log("Number selected:", number);
       return [...prev, number];
     });
-    setCurrentSelectedNumber(number);
+
+    setTheBets((prev) => {
+      const existingBet = prev.find((bet) => bet.amount === selectedBet);
+
+      if (existingBet) {
+        // If number exists, toggle it (add/remove)
+        if (existingBet.number.includes(number)) {
+          return prev.map((bet) =>
+            bet.amount === selectedBet
+              ? { ...bet, number: bet.number.filter((n) => n !== number) }
+              : bet
+          );
+        }
+
+        if (existingBet.number.length >= MAX_SELECTIONS) {
+          toast.error(`Maximum ${MAX_SELECTIONS} numbers allowed`);
+          return prev;
+        }
+
+        return prev.map((bet) =>
+          bet.amount === selectedBet
+            ? { ...bet, number: [...bet.number, number] }
+            : bet
+        );
+      }
+
+      // If no bet exists for the selectedBet, create a new one
+      return [...prev, { number: [number], amount: selectedBet }];
+    });
+
+    if (isDeselected) {
+      console.log("Sending UNBET to socket");
+      socket.send(
+        JSON.stringify({
+          type: "UNBET",
+          unBetNumbers: { numbers: [number], amount: selectedBet },
+        })
+      );
+    } else {
+      console.log("Sending BET to socket");
+      socket.send(
+        JSON.stringify({
+          type: "BET",
+          betNumbers: { numbers: [number], amount: selectedBet },
+        })
+      );
+    }
+
+    socket.send(JSON.stringify({ type: "BALANCE" }));
   };
 
   const handleBetSelection = (amount: number) => {
     console.log("Bet amount selected:", amount);
     setSelectedBet(amount);
     setCurrentSelectedBet(amount);
+    setTheBets((prev) => {
+      const existingBet = prev.find((bet) => bet.amount === amount);
+
+      if (!existingBet) {
+        // Add a new bet entry if it doesn't exist
+        return [...prev, { number: [], amount }];
+      }
+
+      return prev;
+    });
     toast.success(`Bet amount set to $${amount}`);
   };
 
   const clearSelections = () => {
     console.log("Clearing selections");
+    socket.send(JSON.stringify({ type: "CLEAR_BET" }));
     setSelectedNumbers([]);
+    setTheBets([]);
     toast.success("Selections cleared");
   };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gradient-to-br from-purple-900 to-gray-900">
       {/* Bet Selection */}
-      <div>currentGameStatus : {currentGameStatus}</div>
-      <div>currentBalance : {currentBalance}</div>
+      <div className="mb-2 px-6 py-2 rounded-sm font-bold text-lg bg-gray-800 text-white">
+        currentGameStatus : {currentGameStatus}
+      </div>
+      <div className="mb-2 px-6 py-2 rounded-sm font-bold text-lg bg-gray-800 text-white">
+        currentBalance : {currentBalance}
+      </div>
       <div className="mb-6 flex gap-4">
         {BET_AMOUNTS.map((amount) => (
           <button
             key={amount}
-            onClick={() => handleBetSelection(amount)}
+            onClick={() => {
+              if (currentGameStatus === GameStatus.Active) {
+                handleBetSelection(amount);
+              } else {
+                toast.error("Game is not active");
+              }
+            }}
             className={`
               px-6 py-2 rounded-full font-bold text-lg transition-all duration-300
               ${selectedBet === amount ? "betting-amount-selected" : "bg-gray-800 text-white hover:bg-gray-700"}
@@ -136,7 +263,13 @@ const KenoBoard = () => {
           {Array.from({ length: 80 }, (_, i) => i + 1).map((number) => (
             <button
               key={number}
-              onClick={() => handleNumberClick(number)}
+              onClick={() => {
+                if (currentGameStatus === GameStatus.Active) {
+                  handleNumberClick(number);
+                } else {
+                  toast.error("Game is not active");
+                }
+              }}
               className={`
                 number-cell
                 aspect-square

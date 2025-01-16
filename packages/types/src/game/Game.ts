@@ -40,7 +40,7 @@ export type OutgoingMessages =
       userId: number;
     }
   | {
-      type: "BALANCE";
+      type: "USER_BALANCE";
       balance: number;
     }
   | {
@@ -62,10 +62,12 @@ export type OutgoingMessages =
       type: "GAME_ENDED";
     }
   | {
-      type: "RESET_GAME";
+      type: "GAME_RESET";
     }
   | {
       type: "BETS_CLEARED";
+      message: string;
+      balance: number;
     }
   | {
       type: "WIN";

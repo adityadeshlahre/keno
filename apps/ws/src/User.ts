@@ -197,6 +197,7 @@ export class User {
       JSON.stringify({
         type: "BETS_CLEARED",
         message: "Cleard all previous bets of user",
+        balance: this.balance,
       })
     );
   }

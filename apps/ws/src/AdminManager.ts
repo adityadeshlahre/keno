@@ -65,7 +65,7 @@ export class AdminManager {
       user.wonAmount = 0;
       user.bets = [];
     });
-    UserManager.getInstance().brodcast({ type: "RESET_GAME" });
+    UserManager.getInstance().brodcast({ type: "GAME_RESET" });
   }
 
   public selectWinningNumbers(numbers?: number[]) {

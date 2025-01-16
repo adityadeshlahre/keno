@@ -6,7 +6,7 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "start": "vite preview --port 5173"
+    "start": "vite build && vite preview --port 5173"
   },
   "dependencies": {
     "@repo/types": "workspace:*",
