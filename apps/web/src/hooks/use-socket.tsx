@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-const WS_URL = "ws://localhost:8080";
+const WS_URL = `wss://${process.env.WS_URL}:8080`;
 export function useSocket(): { socket: WebSocket; loading: boolean } {
   const [socket, setSocket] = useState<WebSocket>();
   const [loading, setLoading] = useState<boolean>(false);

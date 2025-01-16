@@ -21,6 +21,7 @@ const AdminButton = () => {
 
   useEffect(() => {
     if (!loading && socket) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       socket.onmessage = (event: any) => {
         const data = JSON.parse(event.data);
 
