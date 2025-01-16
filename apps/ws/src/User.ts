@@ -46,8 +46,12 @@ export class User {
           );
 
           if (existingUser) {
-            existingUser.isAdmin = true;
-            adminManager.addAdmin(existingUser);
+            if (!existingUser.isAdmin) {
+              existingUser.isAdmin = true;
+              adminManager.addAdmin(existingUser);
+              console.log(`User ${existingUser.id} upgraded to admin`);
+            }
+
             this.ws.send(
               JSON.stringify({
                 type: "ADMIN_CONNECTED",
@@ -64,7 +68,6 @@ export class User {
 
         if (this.isAdmin && message.type === "START_GAME") {
           if (adminManager.GameState() === GameStatus.Inactive) {
-            adminManager.ChangeState(GameStatus.Active);
             adminManager.startGame();
             this.ws.send(JSON.stringify({ type: "GAME_STARTED" }));
           }
@@ -72,7 +75,6 @@ export class User {
 
         if (this.isAdmin && message.type === "STOP_GAME") {
           if (adminManager.GameState() === GameStatus.Active) {
-            adminManager.ChangeState(GameStatus.Inactive);
             adminManager.stopGame();
             this.ws.send(JSON.stringify({ type: "GAME_STOPPED" }));
           }
@@ -80,7 +82,6 @@ export class User {
 
         if (this.isAdmin && message.type === "END_GAME") {
           if (adminManager.GameState() === GameStatus.Inactive) {
-            adminManager.ChangeState(GameStatus.GameOver);
             if (
               this.bets.length !== 0 ||
               this.bets.every(
@@ -91,14 +92,17 @@ export class User {
               adminManager.selectWinningNumbers(message.winnigNumbers);
               this.ws.send(JSON.stringify({ type: "GAME_ENDED" }));
               adminManager.announceResults();
-            } else {
-              this.ws.send(
-                JSON.stringify({
-                  type: "BET_NEXT_ROUND",
-                  message: "Bet in next round.",
-                })
-              );
             }
+            adminManager.endGame();
+
+            // else {
+            //   this.ws.send(
+            //     JSON.stringify({
+            //       type: "BET_NEXT_ROUND",
+            //       message: "Bet in next round.",
+            //     })
+            //   );
+            // }
           }
         }
 

@@ -29,6 +29,10 @@ export type IncomingMessages =
 
 export type OutgoingMessages =
   | {
+      type: "ADMIN_CONNECTED";
+      userId: number;
+    }
+  | {
       type: "BALANCE";
       balance: number;
     }
@@ -46,6 +50,9 @@ export type OutgoingMessages =
     }
   | {
       type: "GAME_STOPPED";
+    }
+  | {
+      type: "GAME_ENDED";
     }
   | {
       type: "RESET_GAME";

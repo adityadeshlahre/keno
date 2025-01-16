@@ -1,4 +1,4 @@
-import KenoBoard from '@/components/KenoBoard';
+import KenoBoard from '../components/KenoBoard';
 
 const Index = () => {
   return <KenoBoard />;

@@ -19,11 +19,14 @@ export class AdminManager {
   }
 
   public addAdmin(user: User) {
-    this._admins.push(user);
+    if (!this._admins.some((admin) => admin.id === user.id)) {
+      this._admins.push(user);
+      console.log(`User ${user.id} added as admin`);
+    }
   }
 
   public isAdmin(user: User): boolean {
-    return this._admins.includes(user);
+    return this._admins.some((admin) => admin.id === user.id);
   }
 
   public GameState(): GameStatus {
@@ -42,13 +45,17 @@ export class AdminManager {
     this.state = GameStatus.Active;
     Game.player = [];
     Game.winningNumbers = [];
-
     UserManager.getInstance().brodcast({ type: "GAME_STARTED" });
   }
 
   public stopGame() {
     this.state = GameStatus.Inactive;
     UserManager.getInstance().brodcast({ type: "GAME_STOPPED" });
+  }
+
+  public endGame() {
+    this.state = GameStatus.GameOver;
+    UserManager.getInstance().brodcast({ type: "GAME_ENDED" });
   }
 
   public resetGame() {
@@ -64,6 +71,13 @@ export class AdminManager {
   public selectWinningNumbers(numbers?: number[]) {
     if (numbers && numbers.length === 20) {
       Game.winningNumbers = numbers.map(Number);
+    } else if (numbers && numbers.length < 20) {
+      const generatedNumbers = new Set<number>(numbers);
+      while (generatedNumbers.size < 20) {
+        const randomNumber = Math.floor(Math.random() * 80) + 1;
+        generatedNumbers.add(randomNumber);
+      }
+      Game.winningNumbers = Array.from(generatedNumbers);
     } else {
       const generatedNumbers = new Set<number>();
       while (generatedNumbers.size < 20) {

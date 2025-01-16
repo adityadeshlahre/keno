@@ -7,7 +7,6 @@ import Game from "./GameState";
 let ID: number = 0;
 export class UserManager {
   public _user: { [key: string]: User } = {};
-  private _admin: { [key: string]: User } = {};
 
   private static _instance: UserManager;
 
@@ -24,7 +23,7 @@ export class UserManager {
     const existingUser = Object.values(this._user).find((u) => u.ws === ws);
 
     if (existingUser) {
-      if (isAdmin) {
+      if (isAdmin && !AdminManager.getInstance().isAdmin(existingUser)) {
         existingUser.isAdmin = true;
         AdminManager.getInstance().addAdmin(existingUser);
       }
@@ -45,6 +44,8 @@ export class UserManager {
 
     if (isAdmin) {
       AdminManager.getInstance().addAdmin(user);
+    } else {
+      this._user[id] = user;
     }
 
     user.send({

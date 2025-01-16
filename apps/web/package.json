@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@repo/types": "workspace:*",
+    "@repo/common": "workspace:*",
     "@repo/ui": "workspace:*",
     "axios": "^1.7.9",
     "react": "^19.0.0",

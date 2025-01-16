@@ -1,5 +1,9 @@
 ## Keno Game
 
+<details>
+
+<summary>Used Template Info</summary>
+
 This is my personal prefered stack for for starting simple full stack projects in one go. Initalized with turborepo in furhter i have added all the stacks along the way.
 
 > [!IMPORTANT]  
@@ -114,6 +118,8 @@ git commit --no-verify -m "init"
 - top level testing script
 
 #### Thank You
+
+<details>
 
 <details>
 
