@@ -5,6 +5,7 @@
     "build": "turbo build",
     "dev:web": "turbo run dev --filter=web",
     "dev:server": "turbo run dev --filter=server",
+    "dev:ws": "turbo run dev --filter=ws",
     "dev": "turbo run dev",
     "dev:docker": "docker compose -f dev.docker-compose.yml up -d",
     "dev:docker:build": "docker compose -f dev.docker-compose.yml build",
@@ -36,7 +37,7 @@
   },
   "packageManager": "pnpm@9.15.4",
   "engines": {
-    "node": ">=23"
+    "node": ">=22"
   },
   "lint-staged": {
     "**/*.{js,jsx,ts,tsx}": "eslint . --fix"

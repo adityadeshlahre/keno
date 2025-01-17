@@ -22,5 +22,6 @@
     "db:push": {
       "cache": true
     }
-  }
+  },
+  "globalDependencies" : ["ws","web","server"]
 }

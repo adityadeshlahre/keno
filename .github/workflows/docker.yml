@@ -30,7 +30,7 @@ jobs:
         run: |
           docker-compose -f docker-compose.yml build
 
-      - name: Build Docker images using Docker Compose for web & server
+      - name: Build Docker images using Docker Compose for web, server & websocket services
         run: |
           docker-compose -f build.docker-compose.yml build
 
