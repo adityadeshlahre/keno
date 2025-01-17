@@ -59,6 +59,7 @@ const KenoBoard = () => {
 
         if (data.type === "GAME_ENDED") {
           setCurrentGameStatus(GameStatus.Inactive);
+          setSelectedNumbers([]);
           toast.success("Game is ended");
         }
 
@@ -72,18 +73,25 @@ const KenoBoard = () => {
         }
 
         if (data.type === "RESULT") {
-          toast.success(`
-            You won $${data.wonAmount}
-            numberOfMatches: ${data.numberOfMatches}
-            playerMatches: ${data.playerMatchedNumbers.join(", ")}
-            playerBetterNumbers: ${data.playerBetNumbers.join(", ")}
-            `);
+          toast.success(`You won $${data.wonAmount}`);
+          toast.success(`numberOfMatches: ${data.numberOfMatches}`);
+          toast.success(
+            `playerMatches: ${data.playerMatchedNumbers.join(", ")}`
+          );
+          toast.success(
+            `playerBetterNumbers: ${data.playerBetNumbers.join(", ")}`
+          );
         }
 
         if (data.type === "WIN") {
-          toast.success(`
-            You won $${data.wonAmount}
-            Updated balance: $${data.balance}`);
+          toast.success(`You won $${data.wonAmount}`);
+          toast.success(`Updated balance: $${data.balance}`);
+          setCurrentBalance(data.balance);
+        }
+
+        if (data.type === "LOSS") {
+          toast.success(`You won $${data.wonAmount}`);
+          toast.success(`Updated balance: $${data.balance}`);
         }
 
         if (data.type === "INSUFFICIENT_FUNDS") {

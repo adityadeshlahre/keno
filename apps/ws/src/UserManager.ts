@@ -227,8 +227,7 @@ export class UserManager {
   }
 
   public clearBetsOfUser(id: number, ws: WebSocket) {
-    const user =
-      this._user[id] || Object.values(this._user).find((u) => u.ws === ws);
+    const user = this._user[id];
 
     // const user = Object.values(this._user).find((u) => u.ws === ws);
 
