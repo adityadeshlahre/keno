@@ -89,9 +89,13 @@ export class User {
               )
             ) {
               // improtant condtion you missed
-              adminManager.selectWinningNumbers(message.winnigNumbers);
+
               this.ws.send(JSON.stringify({ type: "GAME_ENDED" }));
-              adminManager.announceResults();
+
+              setTimeout(() => {
+                adminManager.selectWinningNumbers(message.winnigNumbers);
+                adminManager.announceResults();
+              }, 2000);
             }
             adminManager.endGame();
 

@@ -191,6 +191,20 @@ export class UserManager {
       return;
     }
 
+    const invalidNumbers = numbersToRemove.filter(
+      (num) => !existingBet.numbers.includes(num)
+    );
+
+    if (invalidNumbers.length > 0) {
+      user.send({
+        type: "error",
+        message: `The following numbers do not exist in your bet: ${invalidNumbers.join(
+          ", "
+        )}`,
+      });
+      return;
+    }
+
     // Remove the specified numbers from the bet's numbers array
     existingBet.numbers = existingBet.numbers.filter(
       (num) => !numbersToRemove.includes(num)

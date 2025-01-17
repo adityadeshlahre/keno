@@ -132,9 +132,21 @@ export class AdminManager {
           wonAmount: totalPayout,
         });
 
-        user.won(totalPayout, Game.winningNumbers);
+        setTimeout(() => {
+          user.won(totalPayout, Game.winningNumbers);
+        }, 2000);
       } else {
-        user.lost(Game.winningNumbers);
+        user.send({
+          type: "RESULT",
+          numberOfMatches: matchedNumbers.length,
+          playerMatchedNumbers: matchedNumbers,
+          playerBettedNumbers: Array.from(betMap.keys()),
+          wonAmount: totalPayout,
+        });
+
+        setTimeout(() => {
+          user.lost(Game.winningNumbers);
+        }, 2000);
       }
     });
 

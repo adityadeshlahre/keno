@@ -31,6 +31,7 @@ const KenoBoard = () => {
       amount: number;
     }[]
   >([{ number: [], amount: currentSelecetdBet }]);
+  const [winningNumbers, setWinningNumbers] = useState<number[]>([]);
   const boardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -57,9 +58,14 @@ const KenoBoard = () => {
           toast.success("Game is started");
         }
 
+        if (data.type === "WINNING_NUMBERS") {
+          setWinningNumbers(data.numbers);
+        }
+
         if (data.type === "GAME_ENDED") {
           setCurrentGameStatus(GameStatus.Inactive);
           setSelectedNumbers([]);
+          setWinningNumbers([]);
           toast.success("Game is ended");
         }
 
@@ -73,25 +79,25 @@ const KenoBoard = () => {
         }
 
         if (data.type === "RESULT") {
-          toast.success(`You won $${data.wonAmount}`);
-          toast.success(`numberOfMatches: ${data.numberOfMatches}`);
-          toast.success(
-            `playerMatches: ${data.playerMatchedNumbers.join(", ")}`
-          );
-          toast.success(
-            `playerBetterNumbers: ${data.playerBetNumbers.join(", ")}`
-          );
+          // toast.success(`You won $${data.wonAmount}`);
+          toast.success(`Number Of Matches: ${data.numberOfMatches}`);
+          // toast.success(
+          //   `playerMatches: ${data.playerMatchedNumbers.join(", ")}`
+          // );
+          // toast.success(
+          //   `playerBetterNumbers: ${data.playerBetNumbers.join(", ")}`
+          // );
         }
 
         if (data.type === "WIN") {
           toast.success(`You won $${data.wonAmount}`);
-          toast.success(`Updated balance: $${data.balance}`);
+          // toast.success(`Updated balance: $${data.balance}`);
           setCurrentBalance(data.balance);
         }
 
         if (data.type === "LOSS") {
           toast.success(`You won $${data.wonAmount}`);
-          toast.success(`Updated balance: $${data.balance}`);
+          // toast.success(`Updated balance: $${data.balance}`);
         }
 
         if (data.type === "INSUFFICIENT_FUNDS") {
@@ -100,6 +106,15 @@ const KenoBoard = () => {
 
         if (data.type === "BET_PLACED") {
           toast.success("Bet placed");
+        }
+
+        if (data.type === "BET_UNPLACED") {
+          toast.success("Bet unplaced");
+        }
+
+        if (data.type === "BETS_CLEARED") {
+          setCurrentBalance(data.balance);
+          toast.success("Bets cleared");
         }
       };
     }
@@ -263,6 +278,11 @@ const KenoBoard = () => {
       >
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-3xl font-bold text-white tracking-wider">KENO</h1>
+          <div className="text-base font-bold text-white tracking-wider p-6">
+            {winningNumbers && winningNumbers.length > 0
+              ? winningNumbers.join(", ") + " 🎉"
+              : "Winning Numbers will be shown here"}
+          </div>
           <div className="text-white">
             Selected: {selectedNumbers.length}/{MAX_SELECTIONS}
           </div>
