@@ -79,3 +79,13 @@ jobs:
           service-id: ${{ secrets.SERVICE_ID_WEB }}
           api-key: ${{ secrets.RENDER_API_KEY }}
           wait-for-success: true
+
+      - name: Sleep for 5 seconds before deploying WebSocket Service
+        run: sleep 5
+
+      - name: Deploy WebSocket Service to Render
+        uses: johnbeynon/render-deploy-action@v0.0.8
+        with:
+          service-id: ${{ secrets.SERVICE_ID_WS }}
+          api-key: ${{ secrets.RENDER_API_KEY }}
+          wait-for-success: true

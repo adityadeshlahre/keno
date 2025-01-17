@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 
 // eslint-disable-next-line no-constant-binary-expression
-const WS_URL = `wss://${import.meta.env.WS_URL}` || `wss://${process.env.WS_URL}` || import.meta.env.WS_URL || `ws://localhost:8080`;
+const WS_URL = `wss://keno-ws.onrender.com`;
 
 export function useSocket(): { socket: WebSocket; loading: boolean } {
   const [socket, setSocket] = useState<WebSocket>();
