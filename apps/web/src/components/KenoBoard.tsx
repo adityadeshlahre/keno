@@ -65,12 +65,12 @@ const KenoBoard = () => {
         if (data.type === "GAME_ENDED") {
           setCurrentGameStatus(GameStatus.Inactive);
           setSelectedNumbers([]);
-          setWinningNumbers([]);
           toast.success("Game is ended");
         }
 
         if (data.type === "GAME_RESET") {
           setCurrentGameStatus(GameStatus.Inactive);
+          setWinningNumbers([]);
           toast.success("Game is restarted");
         }
 
@@ -141,9 +141,6 @@ const KenoBoard = () => {
       return;
     }
 
-    const isDeselected =
-      selectedNumbers.includes(number) || currentSelecetdNumber === number;
-
     setCurrentSelectedNumber((prev) => {
       if (prev === number) {
         return null;
@@ -196,7 +193,7 @@ const KenoBoard = () => {
       return [...prev, { number: [number], amount: selectedBet }];
     });
 
-    if (isDeselected) {
+    if (selectedNumbers.includes(number)) {
       console.log("Sending UNBET to socket");
       socket.send(
         JSON.stringify({
